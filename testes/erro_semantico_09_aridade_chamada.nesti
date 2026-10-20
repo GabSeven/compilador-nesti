@@ -1,0 +1,7 @@
+program Invalido { 
+	fun dobro(int x) -> int { 
+		return x * 2; 
+	} 
+	
+	print(dobro()); 
+}

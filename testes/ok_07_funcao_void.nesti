@@ -1,0 +1,8 @@
+program Procedimento { 
+	fun mostrar(int n) -> void { 
+		print(n); 
+		return; 
+	} 
+	
+	mostrar(12); 
+}

@@ -1,0 +1,6 @@
+program Invalido { 
+	fun verifica() -> bool { 
+		return 10; 
+	} 
+	print(verifica()); 
+}

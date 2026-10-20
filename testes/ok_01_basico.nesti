@@ -1,0 +1,6 @@
+program Basico { 
+	int x = 7; 
+	bool ativo = true; 
+	x = x + 3; 
+	print(x, ativo); 
+}

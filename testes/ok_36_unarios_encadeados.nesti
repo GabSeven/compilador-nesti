@@ -1,0 +1,7 @@
+program unarios {
+    int x = 3;
+    bool b = false;
+    print(-(-(-x)));
+    print(!(!(!b)));
+    print(-(-(x + 2)));
+}

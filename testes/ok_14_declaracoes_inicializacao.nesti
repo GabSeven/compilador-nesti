@@ -1,0 +1,10 @@
+program declaracoes {
+    int a;                  // sem valor inicial
+    int b = 7;
+	bool ok = true;
+    int c = b * 2 + 1;      // usa 'b', declarada antes
+    bool neg = !ok;
+
+    a = c - b;
+    print(a, b, c, ok, neg);
+}

@@ -1,0 +1,6 @@
+program EntradaSaida { 
+	int a; 
+	bool b; 
+	read(a, b); 
+	print(a, b, a + 1); 
+}

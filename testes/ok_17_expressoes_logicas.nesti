@@ -1,0 +1,14 @@
+program logicas {
+    int a = 5;
+    int b = 8;
+    bool p = true;
+    bool q = false;
+
+    print(a < b, a <= b, a > b, a >= b);     // 1 1 0 0
+    print(a == 5, a != 5, p == q, p != q);   // 1 0 0 1
+    print(p && q, p || q, !p, !q);           // 0 1 0 1
+    print(p || q && q);                      // 1  (&& tem precedência sobre ||)
+    print(!p || !q && p);                    // 1
+    print(a + 1 == b - 2 && a < b);          // 1  (aritmética > relacional > igualdade > &&)
+    print((a < b) == (b > a));               // 1  (igualdade entre bool)
+}

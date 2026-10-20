@@ -1,0 +1,14 @@
+program Funcoes { 
+	int resultado = 0; 
+	
+	fun soma(int a, int b) -> int { 
+		return a + b; 
+	} 
+	
+	fun positivo(int n) -> bool { 
+		return n > 0; 
+	} 
+	
+	resultado = soma(4, 8); 
+	print(resultado, positivo(resultado)); 
+}

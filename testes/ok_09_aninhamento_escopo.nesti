@@ -1,0 +1,14 @@
+program Aninhamento { 
+	int base = 10; 
+	fun externa(int x) -> int { 
+		int extra = 2; 
+		
+		fun interna(int y) -> int { 
+			return base + x + extra + y; 
+		} 
+		
+		return interna(3); 
+	} 
+	
+	print(externa(4)); 
+}
