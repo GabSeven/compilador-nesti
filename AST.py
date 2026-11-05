@@ -15,6 +15,7 @@ class Program(No):
     id: Id
     decVariaveis: list[DeclaraVariavel]
     decFuncoes: list[DeclaraFuncao]
+    comandos: list[Cmd]
 
 @dataclass
 class DeclaraFuncao(No):
@@ -59,7 +60,7 @@ class Repeticao(Cmd):
 
 @dataclass
 class Retorno(Cmd):
-    expr: Expr
+    expr: Expr | None
 
 @dataclass
 class Leitura(Cmd):
@@ -70,9 +71,13 @@ class Escrita(Cmd):
     exprs: list[Expr]
 
 @dataclass
-class ChamadaComando(Cmd):
+class Chamada(No):
     id: Expr
     params: list[Expr]
+
+@dataclass
+class ChamadaCmd(Cmd):
+    chamada: Chamada
 
 @dataclass
 class Expr(No):
@@ -96,6 +101,10 @@ class Numero(Expr):
 @dataclass
 class Booleano(Expr):
     valor: bool
+
+@dataclass
+class ChamadaExpr(Expr):
+    chamada: Chamada
 
 @dataclass
 class Id(No):
