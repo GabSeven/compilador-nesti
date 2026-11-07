@@ -2,14 +2,16 @@ from sys import argv
 
 from lexer import lexer
 from parser import parser
+from semantic import AnalisadorSemantico
 
 
 def compilador(arquivo_codigo: str):
     with open(arquivo_codigo, 'r') as f:
         codigo = f.read()
     
-    x = parser.parse(codigo, lexer=lexer)
-    print(x)
+    ast = parser.parse(codigo, lexer=lexer)
+    print(ast)
+    AnalisadorSemantico().visita(ast)    
     
 
 

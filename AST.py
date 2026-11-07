@@ -3,8 +3,12 @@ from __future__ import annotations
 from dataclasses import dataclass
 from typing import Literal
 
-Tipo = Literal['int', 'bool']
-TipoRetorno = Literal['int', 'bool', 'void']
+INT = 'int'
+BOOL = 'bool'
+VOID = 'void'
+
+Tipo = Literal[INT, BOOL]
+TipoRetorno = Literal[INT, BOOL, VOID]
 
 @dataclass
 class No:
@@ -43,40 +47,35 @@ class Cmd(No):
     pass
 
 @dataclass
-class Atribuicao(Cmd):
-    var: Id
+class CmdAtribuicao(Cmd):
+    id: Id
     expr: Expr
 
 @dataclass
-class Condicional(Cmd):
+class CmdCondicional(Cmd):
     expr: Expr
     bloco1: list[Cmd]
     bloco2: list[Cmd] 
 
 @dataclass
-class Repeticao(Cmd):
+class CmdRepeticao(Cmd):
     expr: Expr
     bloco: list[Cmd]
 
 @dataclass
-class Retorno(Cmd):
+class CmdRetorno(Cmd):
     expr: Expr | None
 
 @dataclass
-class Leitura(Cmd):
+class CmdLeitura(Cmd):
     ids: list[Id]
 
 @dataclass
-class Escrita(Cmd):
+class CmdEscrita(Cmd):
     exprs: list[Expr]
 
 @dataclass
-class Chamada(No):
-    id: Expr
-    params: list[Expr]
-
-@dataclass
-class ChamadaCmd(Cmd):
+class CmdChamada(Cmd):
     chamada: Chamada
 
 @dataclass
@@ -85,9 +84,25 @@ class Expr(No):
 
 @dataclass
 class OpBin(Expr):
-    op: Literal['+', '-', '*', '/', '<', '<=', '>', '>=', '==', '!=', '&&', '||']
+    op: Literal[str]
     ladoEsq: Expr
     ladoDir: Expr
+
+@dataclass
+class OpAritmetica(OpBin):
+    op: Literal['+', '-', '*', '/']
+
+@dataclass
+class OpRelacional(OpBin):
+    op: Literal['<', '<=', '>', '>=']
+
+@dataclass
+class OpIgualdade(OpBin):
+    op: Literal['==', '!=']
+
+@dataclass
+class OpLogica(OpBin):
+    op: Literal['&&', '||']
 
 @dataclass
 class OpUn(Expr):
@@ -103,9 +118,13 @@ class Booleano(Expr):
     valor: bool
 
 @dataclass
-class ChamadaExpr(Expr):
-    chamada: Chamada
+class Chamada(Expr):
+    id: Id
+    params: list[Expr]
 
 @dataclass
 class Id(No):
     nome: str
+
+    def __hash__(self):
+        return hash(self.nome)
