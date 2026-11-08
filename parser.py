@@ -128,7 +128,7 @@ def p_repeticao(p):
 
 def p_bloco(p):
     r"bloco ::= '{' comandos '}'"
-    p[0] = p[1]
+    p[0] = p[2]
 
 def p_retorno_vazio(p):
     r"retorno ::= RETURN ';'"
@@ -204,7 +204,7 @@ def p_expr_Relacional(p):
 
 def p_expr_igualdade(p):
     r"""
-    expr ::= expr  expr
+    expr ::= expr EQ expr
             | expr NEQ expr
     """
     p[0] = OpIgualdade(p[2], p[1], p[3])
@@ -234,7 +234,7 @@ def p_expr_unaria(p):
 
 def p_expr_braces(p):
     r"expr ::= '(' expr ')'"
-    p[0] = p[1]
+    p[0] = p[2]
 
 def p_expr_numero(p):
     r"expr ::= NUMBER"

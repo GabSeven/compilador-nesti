@@ -54,8 +54,8 @@ class CmdAtribuicao(Cmd):
 @dataclass
 class CmdCondicional(Cmd):
     expr: Expr
-    bloco1: list[Cmd]
-    bloco2: list[Cmd] 
+    bloco_true: list[Cmd]
+    bloco_false: list[Cmd] 
 
 @dataclass
 class CmdRepeticao(Cmd):

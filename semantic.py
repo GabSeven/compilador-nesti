@@ -1,5 +1,5 @@
 from collections import ChainMap
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from typing import Literal
 
 from AST import *
@@ -12,6 +12,8 @@ class ErroSemantico(CompiladorError): ...
 @dataclass
 class Simbolo:
     id: Id
+    nivel_lexico: int | None = field(default=None, init=False)
+    endereco: int | None = field(default=None, init=False)
 
 @dataclass
 class SimboloPrograma(Simbolo): ...
@@ -34,23 +36,41 @@ class SimboloParametro(Simbolo):
 def processa_params(params: list[Param]) -> list:
     return [no.tipo for no in params]
 
+
 class TabelaDeSimbolos(ChainMap):
     def __init__(self):
         super().__init__()
+        self.endereco = [-1]
+        self.nivel_lexico = 0
 
-    def salvar(self, s: Simbolo):
+    def novo_endereco(self) -> int:
+        self.endereco[-1] += 1
+        return self.endereco[-1]
+
+    def salvar(self, s: Simbolo) -> int:
         if str(s.id) in self.maps[0]:
             raise ErroSemantico(f"Identificador {name} já declarado anteriormente")
+        
+        if type(s) not in (SimboloFuncao, SimboloPrograma):
+            s.endereco = self.novo_endereco()
+        s.nivel_lexico = self.nivel_lexico
+
         
         self[s.id] = s
 
     def entrar_escopo(self):
         novo_escopo = self.new_child()
         self.maps = novo_escopo
+        
+        self.nivel_lexico += 1
+        self.endereco.append([-1])
 
     def sair_escopo(self):
         novo_escopo = self.parents 
         self.maps = novo_escopo
+        
+        self.nivel_lexico -= 1
+        self.endereco.pop()
 
     def __missing__(self, key):
         return None
@@ -59,9 +79,8 @@ class AnalisadorSemantico(Visitador):
     def __init__(self):
         self.tabela_simbolos = TabelaDeSimbolos()
         self.erros = []
-
     def visita_Program(self, no: Program):
-        s = SimboloPrograma(no.id)
+        s = SimboloPrograma(id=no.id)
         no.simbolo = s
         self.tabela_simbolos.salvar(s)
         
@@ -74,7 +93,7 @@ class AnalisadorSemantico(Visitador):
     
     def visita_DeclaraFuncao(self, no: DeclaraFuncao):
         tipo_params = processa_params(no.params)
-        s = SimboloFuncao(no.id, tipo_params)
+        s = SimboloFuncao(id=no.id, params=tipo_params, tipo=no.tipoRetorno)
         no.simbolo = s
 
         self.tabela_simbolos.salvar(s)
@@ -92,13 +111,13 @@ class AnalisadorSemantico(Visitador):
         self.tabela_simbolos.sair_escopo()
     
     def visita_Param(self, no: Param):
-        s = SimboloParametro(no.id)
+        s = SimboloParametro(id=no.id, tipo=no.tipo)
         self.tabela_simbolos.salvar(s)
         no.simbolo = s
         # da pra adicionar erro aqui se tiver 2 param com mesmo nome
 
     def visita_DeclaraVariavel(self, no: DeclaraVariavel):
-        s = SimboloVariavel(no.id, no.tipo)
+        s = SimboloVariavel(id=no.id, tipo=no.tipo)
         self.tabela_simbolos.salvar(s)
         no.simbolo = s
 
@@ -151,6 +170,13 @@ class AnalisadorSemantico(Visitador):
 
     def visita_CmdChamada(self, no: CmdChamada):
         pass
+
+    def visita_CmdCondicional(self, no: CmdCondicional):
+        self.visita(no.expr)
+        for cmd in no.bloco_true:
+            self.visita(cmd)
+        for cmd in no.bloco_false:
+            self.visita(cmd)
     
     def visita_OpAritmetica(self, no: OpAritmetica):
         self.visita(no.ladoDir)

@@ -1,0 +1,41 @@
+INPP - inicia programa
+PARA - termina execucao
+FIM - marca o fim do arquivo
+
+AMEM n - reserva n posições na pilha M
+DMEM n - desocupa n posições na pilha M
+
+CRCT k - carrega constante k no topo da pilha M
+CRVL m, n - carrega valor de endereco D[m]+n no topo da pilha M
+ARMZ m, n - armazena o topo da pilha no endereco D[m]+n de M
+
+SOMA - soma o elemento antecessor com o topo da pilha
+SUBT - subtrai o antecessor pelo elemento do topo
+
+MULT - multiplica o elemento antecessor pelo elemento do topo
+DIVI - divide o elemento antecessor pelo elemento do topo
+INVR - inverte sinal do topo
+
+CONJ - e
+DISJ - ou
+NEGA - nao
+
+CMME - comparação de menor entre o antecessor e o topo - se M[s-1] < M[s] então M[s-1] = 1
+CMMA - comparação de maior - se M[s-1] > M[s] então M[s-1] = 1
+CMIG - comparação de igualdade
+CMDG - comparação de desigualdade
+CMEG - comparação menor-igual - se M[s-1] <= M[s] então M[s-1] = 1
+CMAG - comparação maior-igual - se M[s-1] >= M[s] então M[s-1] = 1
+
+DSVS p - desvio incondicional para a instrução de endereço p | i = p
+DSVF p
+//desvio condicional para a instrução de endereço p;
+//o desvio será executado se a condição for falsa;
+//o valor da condição estará no topo da pilha M;
+//após a avaliação da condição, ela é desempilhada
+se M[s] == 0 então i = p senão i = i+1
+
+LEIT - Lê um valor do stdin para o topo da pilha | s = s+1; M[s] = “valor lido”
+IMPR - Imprime o topo da pilha no stdout | “imprime M[s]”; s = s-1
+
+NADA

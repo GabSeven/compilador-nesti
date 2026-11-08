@@ -1,5 +1,6 @@
 from sys import argv
 
+from gerador_codigo import GeradorCodigoMEPA
 from lexer import lexer
 from parser import parser
 from semantic import AnalisadorSemantico
@@ -10,9 +11,11 @@ def compilador(arquivo_codigo: str):
         codigo = f.read()
     
     ast = parser.parse(codigo, lexer=lexer)
-    print(ast)
     AnalisadorSemantico().visita(ast)    
-    
+    gerador = GeradorCodigoMEPA()
+    gerador.visita(ast)
+    for line in gerador.codigo:
+        print(line)
 
 
 
