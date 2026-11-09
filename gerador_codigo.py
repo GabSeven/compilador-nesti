@@ -12,7 +12,7 @@ from visitador import Visitador
 class GeradorCodigoMEPA(Visitador):
     def __init__(self):
         self.codigo = []
-        self.contador_cond = 0
+        self.contador_rotulos = 0
 
 
     def rotulo(self, label: str, instr: str): ...
@@ -92,19 +92,32 @@ class GeradorCodigoMEPA(Visitador):
         
         possui_else = len(no.bloco_false) > 0
 
-        self.codigo.append(f"DSVF {"Else" if possui_else else "FimCond"}{self.contador_cond}")
+        self.codigo.append(f"DSVF {"Else" if possui_else else "FimCond"}{self.contador_rotulos}")
 
-        self.codigo.append(f"If{self.contador_cond}: NADA")
+        self.codigo.append(f"If{self.contador_rotulos}: NADA")
         for cmd in no.bloco_true:
             self.visita(cmd)
-        self.codigo.append(f"DSVS FimCond{self.contador_cond}")
+        self.codigo.append(f"DSVS FimCond{self.contador_rotulos}")
 
         if possui_else:
-            self.codigo.append(f"Else{self.contador_cond}: NADA")
+            self.codigo.append(f"Else{self.contador_rotulos}: NADA")
             for cmd in no.bloco_false:
                 self.visita(cmd)
 
-        self.codigo.append(f"FimCond{self.contador_cond}: NADA")
-        self.contador_cond += 1
+        self.codigo.append(f"FimCond{self.contador_rotulos}: NADA")
+        self.contador_rotulos += 1
+    
+    def visita_CmdRepeticao(self, no: CmdRepeticao):
+        self.visita(no.expr)
+
+        self.codigo.append(f"InicioLaco{self.contador_rotulos}: NADA")
+        self.codigo.append(f"DSVF FimLaco{self.contador_rotulos}")
+
+        for cmd in no.bloco:
+            self.visita(cmd)
+
+        self.codigo.append(f"DSVS InicioLaco{self.contador_rotulos}")
+        self.codigo.append(f"FimLaco{self.contador_rotulos}: NADA")
+        self.contador_rotulos += 1
         
         
