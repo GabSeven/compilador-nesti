@@ -39,53 +39,11 @@ class GeradorCodigoMEPA(Visitador):
             self.visita(no.expr)
             s : SimboloVariavel = no.simbolo
             self.codigo.append(f"ARMZ {s.nivel_lexico},{s.endereco}")
-    
-    def visita_CmdEscrita(self, no: CmdEscrita):
-        for expr in no.exprs:
-            self.visita(expr)
-            self.codigo.append("IMPR")
-
-    def visita_Numero(self, no: Numero):
-        self.codigo.append(f"CRCT {no.valor}")
-
-    def visita_Id(self, no: Id):
-        s : Simbolo = no.simbolo
-        self.codigo.append(f"CRVL {s.nivel_lexico},{s.endereco}")
 
     def visita_CmdAtribuicao(self, no: CmdAtribuicao):
         s : SimboloVariavel = no.simbolo_id
         self.visita(no.expr)
         self.codigo.append(f"ARMZ {s.nivel_lexico},{s.endereco}")
-
-    def visita_OpAritmetica(self, no: OpAritmetica):
-        self.visita(no.ladoEsq)
-        self.visita(no.ladoDir)
-
-        op = {'+': 'SOMA', '-': 'SUBT', '*': 'MULT', '/':'DIVI'}
-        self.codigo.append(op[no.op])
-
-    def visita_Booleano(self, no: Booleano):
-        self.codigo.append(f"CRCT {"1" if no.valor else "0"}")
-
-    def visita_OpUn(self, no: OpUn):
-        self.visita(no.expr)
-        self.codigo.append({'-': 'INVR', '!':'NEGA'}[no.op])
-    
-    def visita_OpLogica(self, no: OpLogica):
-        self.visita(no.ladoEsq)
-        self.visita(no.ladoDir)
-        self.codigo.append({'&&':'CONJ', '||':'DISJ'}[no.op])
-
-    def visita_OpRelacional(self, no: OpRelacional):
-        self.visita(no.ladoEsq)
-        self.visita(no.ladoDir)
-        op = {'<':'CMME', '>': 'CMMA', '<=':'CMEG', '>=':'CMAG'}
-        self.codigo.append(op[no.op])
-
-    def visita_OpIgualdade(self, no: OpIgualdade):
-        self.visita(no.ladoEsq)
-        self.visita(no.ladoDir)
-        self.codigo.append({'==':'CMIG', '!=':'CMDG'}[no.op])
 
     def visita_CmdCondicional(self, no: CmdCondicional):
         self.visita(no.expr)
@@ -119,5 +77,45 @@ class GeradorCodigoMEPA(Visitador):
         self.codigo.append(f"DSVS InicioLaco{self.contador_rotulos}")
         self.codigo.append(f"FimLaco{self.contador_rotulos}: NADA")
         self.contador_rotulos += 1
-        
-        
+
+    def visita_CmdEscrita(self, no: CmdEscrita):
+        for expr in no.exprs:
+            self.visita(expr)
+            self.codigo.append("IMPR")
+
+    def visita_OpAritmetica(self, no: OpAritmetica):
+        self.visita(no.ladoEsq)
+        self.visita(no.ladoDir)
+
+        op = {'+': 'SOMA', '-': 'SUBT', '*': 'MULT', '/':'DIVI'}
+        self.codigo.append(op[no.op])
+
+    def visita_OpRelacional(self, no: OpRelacional):
+        self.visita(no.ladoEsq)
+        self.visita(no.ladoDir)
+        op = {'<':'CMME', '>': 'CMMA', '<=':'CMEG', '>=':'CMAG'}
+        self.codigo.append(op[no.op])
+
+    def visita_OpIgualdade(self, no: OpIgualdade):
+        self.visita(no.ladoEsq)
+        self.visita(no.ladoDir)
+        self.codigo.append({'==':'CMIG', '!=':'CMDG'}[no.op])
+
+    def visita_OpLogica(self, no: OpLogica):
+        self.visita(no.ladoEsq)
+        self.visita(no.ladoDir)
+        self.codigo.append({'&&':'CONJ', '||':'DISJ'}[no.op])
+
+    def visita_OpUn(self, no: OpUn):
+        self.visita(no.expr)
+        self.codigo.append({'-': 'INVR', '!':'NEGA'}[no.op])
+
+    def visita_Numero(self, no: Numero):
+        self.codigo.append(f"CRCT {no.valor}")
+
+    def visita_Booleano(self, no: Booleano):
+        self.codigo.append(f"CRCT {"1" if no.valor else "0"}")
+
+    def visita_Id(self, no: Id):
+        s : Simbolo = no.simbolo
+        self.codigo.append(f"CRVL {s.nivel_lexico},{s.endereco}")
