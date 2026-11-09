@@ -78,6 +78,12 @@ class GeradorCodigoMEPA(Visitador):
         self.codigo.append(f"FimLaco{self.contador_rotulos}: NADA")
         self.contador_rotulos += 1
 
+    def visita_CmdLeitura(self, no: CmdLeitura):
+        
+        for s in no.simbolos_params.values():
+            self.codigo.append("LEIT")
+            self.codigo.append(f"ARMZ {s.nivel_lexico},{s.endereco}")
+
     def visita_CmdEscrita(self, no: CmdEscrita):
         for expr in no.exprs:
             self.visita(expr)

@@ -55,7 +55,6 @@ class TabelaDeSimbolos(ChainMap):
             s.endereco = self.novo_endereco()
         s.nivel_lexico = self.nivel_lexico
 
-        
         self[s.id] = s
 
     def entrar_escopo(self):
@@ -161,8 +160,13 @@ class AnalisadorSemantico(Visitador):
         pass
     
     def visita_CmdLeitura(self, no: CmdLeitura):
+        no.simbolos_params = {}
         for id in no.ids:
+            if id in no.simbolos_params:
+                raise ErroSemantico("2 parametros com mesmo nome")
+
             self.visita(id)
+            no.simbolos_params[id] = id.simbolo
 
     def visita_CmdEscrita(self, no: CmdEscrita):
         for expr in no.exprs:
@@ -173,6 +177,7 @@ class AnalisadorSemantico(Visitador):
 
     def visita_CmdCondicional(self, no: CmdCondicional):
         self.visita(no.expr)
+
         for cmd in no.bloco_true:
             self.visita(cmd)
         for cmd in no.bloco_false:
