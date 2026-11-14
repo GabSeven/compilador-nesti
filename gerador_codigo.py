@@ -25,15 +25,45 @@ class GeradorCodigoMEPA(Visitador):
 
         for decVar in no.decVariaveis:
             self.visita(decVar)
-        for decFun in no.decFuncoes:
-            self.visita(decFun)
+
+        if no.decFuncoes:        
+            self.codigo.append("DSVS FimDecFuncProgram")
+            self.codigo.append("DecFuncProgram: NADA")
+            for decFun in no.decFuncoes:
+                self.visita(decFun)
+            self.codigo.append("FimDecFuncProgram: NADA")
+        
         for cmd in no.comandos:
             self.visita(cmd)
 
+        self.codigo.append(f"DMEM {len(no.decVariaveis)}")
         self.codigo.append("PARA")
         self.codigo.append("FIM")
     
+    def visita_DeclaraFuncao(self, no: DeclaraFuncao):
+        self.codigo.append(f"Func{self.contador_rotulos}: NADA")
+        no.simbolo.rotulo = f"Func{self.contador_rotulos}"
+        self.codigo.append(f"ENPR {no.nivel_lexico}")
+        for decVar in no.decVariaveis:
+            self.visita(decVar)
+        
+        if no.decFuncoes:
+            self.codigo.append(f"DSCS FimDecFunc{self.contador_rotulos}")
+            self.codigo.append(f"DecFunc{self.contador_rotulos}: NADA")
+            for decFun in no.decFuncoes:
+                self.visita(decFun)
+            self.codigo.append(f"FimDecFunc{self.contador_rotulos}: NADA")
+        
+        for cmd in no.comandos:
+            self.visita(cmd)
+            
+        self.contador_rotulos += 1
+
+        tamanho_memoria_alocada = len(no.decVariaveis)
+        self.codigo.append(f"DMEM {tamanho_memoria_alocada}")
+
     def visita_DeclaraVariavel(self, no: DeclaraVariavel):
+        # mudar para alocar várias de uma vez
         self.codigo.append("AMEM 1")
         if no.expr is not None:
             self.visita(no.expr)
@@ -44,6 +74,11 @@ class GeradorCodigoMEPA(Visitador):
         s : SimboloVariavel = no.simbolo_id
         self.visita(no.expr)
         self.codigo.append(f"ARMZ {s.nivel_lexico},{s.endereco}")
+
+    def visita_CmdChamada(self, no: CmdChamada):
+        self.visita(no.chamada)
+        if no.chamada.tipo != VOID:
+            self.codigo.append("DMEM 1")
 
     def visita_CmdCondicional(self, no: CmdCondicional):
         self.visita(no.expr)
@@ -78,8 +113,14 @@ class GeradorCodigoMEPA(Visitador):
         self.codigo.append(f"FimLaco{self.contador_rotulos}: NADA")
         self.contador_rotulos += 1
 
+    def visita_CmdRetorno(self, no: CmdRetorno):
+        if no.expr is not None:
+            self.visita(no.expr)
+            self.codigo.append(f"ARMZ {no.nivel_lexico},-{5+no.numero_variaveis}")
+
+        self.codigo.append(f"RTPR {no.numero_variaveis}")
+
     def visita_CmdLeitura(self, no: CmdLeitura):
-        
         for s in no.simbolos_params.values():
             self.codigo.append("LEIT")
             self.codigo.append(f"ARMZ {s.nivel_lexico},{s.endereco}")
@@ -121,6 +162,16 @@ class GeradorCodigoMEPA(Visitador):
 
     def visita_Booleano(self, no: Booleano):
         self.codigo.append(f"CRCT {"1" if no.valor else "0"}")
+
+    def visita_Chamada(self, no: Chamada):
+        if no.tipo != VOID:
+            self.codigo.append("AMEM 1")
+        
+        for param in no.params:
+            self.visita(param)
+
+        s : SimboloFuncao = no.simbolo
+        self.codigo.append(f"CHPR {s.rotulo},{s.nivel_lexico}")
 
     def visita_Id(self, no: Id):
         s : Simbolo = no.simbolo

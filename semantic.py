@@ -21,7 +21,7 @@ class SimboloPrograma(Simbolo): ...
 @dataclass
 class SimboloFuncao(Simbolo):
     tipo: TipoRetorno
-    params: list[...]
+    params: tuple[Tipo]
 
 @dataclass
 class SimboloVariavel(Simbolo):
@@ -33,13 +33,13 @@ class SimboloParametro(Simbolo):
     tipo: Tipo
 
 
-def processa_params(params: list[Param]) -> list:
-    return [no.tipo for no in params]
+def tipo_params(params: list[Param]) -> tuple[Tipo]:
+    return tuple(no.tipo for no in params)
 
 
 class TabelaDeSimbolos(ChainMap):
-    def __init__(self):
-        super().__init__()
+    def __init__(self, *maps):
+        super().__init__(*maps)
         self.endereco = [-1]
         self.nivel_lexico = 0
 
@@ -47,7 +47,7 @@ class TabelaDeSimbolos(ChainMap):
         self.endereco[-1] += 1
         return self.endereco[-1]
 
-    def salvar(self, s: Simbolo) -> int:
+    def salvar(self, s: Simbolo):
         if str(s.id) in self.maps[0]:
             raise ErroSemantico(f"Identificador {name} já declarado anteriormente")
         
@@ -58,15 +58,14 @@ class TabelaDeSimbolos(ChainMap):
         self[s.id] = s
 
     def entrar_escopo(self):
-        novo_escopo = self.new_child()
-        self.maps = novo_escopo
+        self.maps.insert(0, {})
         
         self.nivel_lexico += 1
-        self.endereco.append([-1])
+        self.endereco.append(-1)
 
     def sair_escopo(self):
-        novo_escopo = self.parents 
-        self.maps = novo_escopo
+        if len(self.maps) > 1:
+            self.maps.pop(0)
         
         self.nivel_lexico -= 1
         self.endereco.pop()
@@ -91,21 +90,31 @@ class AnalisadorSemantico(Visitador):
             self.visita(cmd)
     
     def visita_DeclaraFuncao(self, no: DeclaraFuncao):
-        tipo_params = processa_params(no.params)
-        s = SimboloFuncao(id=no.id, params=tipo_params, tipo=no.tipoRetorno)
+        params = no.params
+        tipo = tipo_params(params)
+        s = SimboloFuncao(id=no.id, params=tipo, tipo=no.tipoRetorno)
         no.simbolo = s
-
         self.tabela_simbolos.salvar(s)
         self.tabela_simbolos.entrar_escopo()
+        no.nivel_lexico = self.tabela_simbolos.nivel_lexico
 
-        for param in no.params:
+        for i, param in enumerate(params, start=-(4+len(params))):
             self.visita(param)
+            param.simbolo.endereco = i 
+
         for decVar in no.decVariaveis:
             self.visita(decVar)
         for decFun in no.decFuncoes:
             self.visita(decFun)
         for cmd in no.comandos:
             self.visita(cmd)
+            if type(cmd) is CmdRetorno:
+                cmd.numero_variaveis = len(no.decVariaveis)
+                if not (
+                (cmd.expr is None and no.tipoRetorno == VOID)
+                or (cmd.expr is not None and cmd.expr.tipo == no.tipoRetorno)):
+                    raise ErroSemantico("Tipo retorno inválido")
+
 
         self.tabela_simbolos.sair_escopo()
     
@@ -157,7 +166,8 @@ class AnalisadorSemantico(Visitador):
         
 
     def visita_CmdRetorno(self, no: CmdRetorno):
-        pass
+        no.nivel_lexico = self.tabela_simbolos.nivel_lexico
+        self.visita(no.expr)
     
     def visita_CmdLeitura(self, no: CmdLeitura):
         no.simbolos_params = {}
@@ -173,8 +183,8 @@ class AnalisadorSemantico(Visitador):
             self.visita(expr)
 
     def visita_CmdChamada(self, no: CmdChamada):
-        pass
-
+        self.visita(no.chamada)
+        
     def visita_CmdCondicional(self, no: CmdCondicional):
         self.visita(no.expr)
 
@@ -184,6 +194,7 @@ class AnalisadorSemantico(Visitador):
             self.visita(cmd)
     
     def visita_OpAritmetica(self, no: OpAritmetica):
+        no.tipo = INT
         self.visita(no.ladoDir)
         self.visita(no.ladoEsq)
 
@@ -193,9 +204,9 @@ class AnalisadorSemantico(Visitador):
         if tipoDir != INT or tipoEsq != INT:
             raise ErroSemantico(f"Operacao Aritmetica '{no.op}' nao aceita tipo diferente de '{INT}'")
 
-        no.tipo = INT
 
     def visita_OpRelacional(self, no: OpRelacional):
+        no.tipo = BOOL
         self.visita(no.ladoDir)
         self.visita(no.ladoEsq)
 
@@ -205,9 +216,9 @@ class AnalisadorSemantico(Visitador):
         if tipoDir != INT or tipoEsq != INT:
             raise ErroSemantico(f"Operacao Relacional '{no.op}' nao aceita tipo diferente de '{INT}'")
 
-        no.tipo = BOOL
     
     def visita_OpIgualdade(self, no: OpIgualdade):
+        no.tipo = BOOL
         self.visita(no.ladoDir)
         self.visita(no.ladoEsq)
 
@@ -217,9 +228,9 @@ class AnalisadorSemantico(Visitador):
         if tipoDir != tipoEsq:
             raise ErroSemantico(f"Operacao '{no.op}' não aceita tipos diferentes")
 
-        no.tipo = BOOL
     
     def visita_OpLogica(self, no: OpLogica):
+        no.tipo = BOOL
         self.visita(no.ladoDir)
         self.visita(no.ladoEsq)
 
@@ -229,9 +240,9 @@ class AnalisadorSemantico(Visitador):
         if tipoDir != BOOL or tipoEsq != BOOL:
             raise ErroSemantico(f"Operacao Logica '{no.op}' nao aceita tipo diferente de '{BOOL}'")
 
-        no.tipo = BOOL
     
     def visita_OpUn(self, no: OpUn):
+        no.tipo = tipo
         self.visita(no.expr)
 
         tipo = no.expr.tipo
@@ -240,7 +251,6 @@ class AnalisadorSemantico(Visitador):
         if not valido:
             raise ErroSemantico(f"Operacao Unária '{no.op}' nao aceita tipo diferente de '{tipo}'")
 
-        no.tipo = tipo
         
     def visita_Id(self, no: Id):
         s = self.tabela_simbolos[no]
@@ -255,6 +265,25 @@ class AnalisadorSemantico(Visitador):
         no.tipo = "bool"
 
     def visita_Chamada(self, no: Chamada):
-        ...
+        s : SimboloFuncao = self.tabela_simbolos[no.id]
+        if s is None:
+            raise ErroSemantico(f"Funcao '{no.id}' não declarada")
+        if type(s) is not SimboloFuncao:
+            raise ErroSemantico(f"Identificaor '{no.id}' nao é do tipo funcao")
+
+        for param in no.params:
+            self.visita(param)
+
+        tipos_recebidos = tipo_params(no.params)
+        tipos_esperados = s.params
+        if len(tipos_esperados) != len(tipos_recebidos):
+            raise ErroSemantico("Quantidade errada de parametros")
+        if tipos_esperados != tipos_recebidos:
+            raise ErroSemantico("Tipo errado de parametro")
+        
+        no.simbolo = s
+        no.tipo = s.tipo
+
+        
         
 
